@@ -1,15 +1,16 @@
 package main
 
 import (
-	"fmt"
-	"math/rand"
+	"crypto/rand"
+	"encoding/hex"
+	mathrand "math/rand"
 	"strings"
 	"time"
 )
 
-func prompt2response(subject string) string {
-	rand.Seed(time.Now().UnixNano())
+var random = mathrand.New(mathrand.NewSource(time.Now().UnixNano()))
 
+func prompt2response(subject string) string {
 	forwards := []string{
 		"这个问题怎么又被顶上热搜了？？？\n以下为正文\n\n",
 		"没想到会有这么多人看，还点赞？\n以下为正文\n\n",
@@ -152,7 +153,8 @@ func prompt2response(subject string) string {
 	content += randomChoose(requestReaders)
 	content += randomChoose(ends)
 
-	content += fmt.Sprintf("\n\n * 注意：以上回复仅供娱乐，由 https://github.com/songquanpeng/openai-mocker 生成*")
+	content += "\n\n * 注意：以上回复仅供娱乐，由 https://github.com/songquanpeng/openai-mocker 生成*"
+
 	return content
 }
 
@@ -160,9 +162,51 @@ func randomChoose(options []string) string {
 	if len(options) == 0 {
 		return ""
 	}
-	return options[rand.Intn(len(options))]
+	return options[mathrand.Intn(len(options))]
 }
 
 func replaceSubject(statement string, subject string) string {
 	return strings.ReplaceAll(statement, "主题", subject)
+}
+
+// generateRandomID 生成一个随机 ID
+func generateRandomID() string {
+	bytes := make([]byte, 16)
+	rand.Read(bytes)
+	return hex.EncodeToString(bytes)
+}
+
+// calculateTokens 简单计算 token 数量（近似值：中文字符按 1.5 个 token 计算，英文单词按 1 个 token 计算）
+func calculateTokens(text string) int {
+	chineseCount := 0
+	englishWords := 0
+	
+	for _, r := range text {
+		if r >= 0x4e00 && r <= 0x9fff {
+			chineseCount++
+		}
+	}
+	
+	words := strings.Fields(text)
+	for _, word := range words {
+		hasChinese := false
+		for _, r := range word {
+			if r >= 0x4e00 && r <= 0x9fff {
+				hasChinese = true
+				break
+			}
+		}
+		if !hasChinese && len(word) > 0 {
+			englishWords++
+		}
+	}
+	
+	// 中文字符按 1.5 个 token 计算，英文单词按 1 个 token 计算
+	tokens := int(float64(chineseCount)*1.5) + englishWords
+	
+	// 至少返回 1
+	if tokens < 1 {
+		return 1
+	}
+	return tokens
 }

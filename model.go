@@ -53,3 +53,30 @@ type ChatCompletionsStreamResponse struct {
 	Model   string                                `json:"model"`
 	Choices []ChatCompletionsStreamResponseChoice `json:"choices"`
 }
+
+// Gemini API 原生格式
+type GeminiPart struct {
+	Text string `json:"text"`
+}
+
+type GeminiContent struct {
+	Role  string       `json:"role"`
+	Parts []GeminiPart `json:"parts"`
+}
+
+type GeminiRequest struct {
+	Contents []GeminiContent `json:"contents"`
+}
+
+type GeminiCandidate struct {
+	Content      GeminiContent `json:"content"`
+	FinishReason string        `json:"finishReason,omitempty"`
+}
+
+type GeminiGenerateContentResponse struct {
+	Candidates []GeminiCandidate `json:"candidates"`
+}
+
+type GeminiStreamChunk struct {
+	Candidates []GeminiCandidate `json:"candidates"`
+}
